@@ -462,13 +462,13 @@ enter_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
         case MD_SPAN_DEL:               RENDER_VERBATIM(r, "<del>"); break;
         case MD_SPAN_LATEXMATH:
             if (r->flags & MD_HTML_FLAG_MATHJAX)
-                RENDER_VERBATIM(r, "\(");
+                RENDER_VERBATIM(r, "\\(");
             else
                 RENDER_VERBATIM(r, "<x-equation>");
             break;
         case MD_SPAN_LATEXMATH_DISPLAY:
             if (r->flags & MD_HTML_FLAG_MATHJAX)
-                RENDER_VERBATIM(r, "\[");
+                RENDER_VERBATIM(r, "\\[");
             else
                 RENDER_VERBATIM(r, "<x-equation type=\"display\">");
             break;
@@ -498,13 +498,13 @@ leave_span_callback(MD_SPANTYPE type, void* detail, void* userdata)
         case MD_SPAN_DEL:               RENDER_VERBATIM(r, "</del>"); break;
         case MD_SPAN_LATEXMATH:
             if (r->flags & MD_HTML_FLAG_MATHJAX)
-                RENDER_VERBATIM(r, "\)");
+                RENDER_VERBATIM(r, "\\)");
             else
                 RENDER_VERBATIM(r, "</x-equation>");
             break;
         case MD_SPAN_LATEXMATH_DISPLAY:
             if (r->flags & MD_HTML_FLAG_MATHJAX)
-                RENDER_VERBATIM(r, "\]");
+                RENDER_VERBATIM(r, "\\]");
             else
                 RENDER_VERBATIM(r, "</x-equation>");
             break;
