@@ -74,12 +74,14 @@ lean_obj_res lean_md4c_markdown_to_html(b_lean_obj_res s) {
     int ret = md_html(lean_string_cstr(s), (MD_SIZE)input_size, process_output, (void*) &buf_out, p_flags, r_flags);
 
     if(ret != 0) {
-        /* TODO: should return `Option.none` */
-        html_string = lean_mk_string("");
+        /* Option.none */
+        html_string = lean_box(0);
     } else {
         /* append a nullchar */
         membuf_append(&buf_out, "", 1);
-        html_string = lean_mk_string(buf_out.data);
+        /* Option.some */
+        html_string = lean_alloc_ctor(1, 1, 0);
+        lean_ctor_set(html_string, 0, lean_mk_string(buf_out.data));
     }
 
     membuf_fini(&buf_out);
