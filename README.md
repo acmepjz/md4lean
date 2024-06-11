@@ -6,4 +6,5 @@ replacing [CMark.lean](https://github.com/xubaiw/CMark.lean).
 
 The `md4c` implementation (`release-0.5.2` version, <https://github.com/mity/md4c/releases/tag/release-0.5.2>)
 has been copied into this repository, so there is no need for other installation process.
-We added a feature `MD_HTML_FLAG_MATHJAX` to it.
+
+Compared to the upstream, a new feature `MD_HTML_FLAG_MATHJAX[_USE_DOLLAR]` is added.
