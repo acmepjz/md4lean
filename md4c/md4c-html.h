@@ -39,6 +39,7 @@
 #define MD_HTML_FLAG_SKIP_UTF8_BOM          0x0004
 #define MD_HTML_FLAG_XHTML                  0x0008
 #define MD_HTML_FLAG_MATHJAX                0x1000
+#define MD_HTML_FLAG_MATHJAX_USE_DOLLAR     0x2000
 
 
 /* Render Markdown into HTML.

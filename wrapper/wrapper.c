@@ -63,7 +63,7 @@ lean_obj_res lean_md4c_markdown_to_html(b_lean_obj_res s) {
     /* TODO: customizable */
     unsigned p_flags = MD_DIALECT_GITHUB | MD_FLAG_LATEXMATHSPANS | MD_FLAG_NOHTML;
     /* TODO: customizable */
-    unsigned r_flags = MD_HTML_FLAG_XHTML | MD_HTML_FLAG_MATHJAX;
+    unsigned r_flags = MD_HTML_FLAG_XHTML | MD_HTML_FLAG_MATHJAX | MD_HTML_FLAG_MATHJAX_USE_DOLLAR;
     size_t input_size = lean_string_size(s) - 1;
     lean_object *html_string = NULL;
 
