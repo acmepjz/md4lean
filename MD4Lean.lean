@@ -29,7 +29,7 @@ def MD_FLAG_PERMISSIVEEMAILAUTOLINKS : UInt32 := 0x0008
 /-- Disable indented code blocks. (Only fenced code works.) -/
 def MD_FLAG_NOINDENTEDCODEBLOCKS : UInt32 := 0x0010
 /-- Disable raw HTML blocks. -/
-def MD_FLAG_NOHTMLBLOCKS : UInt32 := x0020
+def MD_FLAG_NOHTMLBLOCKS : UInt32 := 0x0020
 /-- Disable raw HTML (inline). -/
 def MD_FLAG_NOHTMLSPANS : UInt32 := 0x0040
 /-- With the flag `MD_FLAG_TABLES`, GitHub-style tables are supported. -/
