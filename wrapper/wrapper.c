@@ -13,11 +13,7 @@ process_output(const MD_CHAR* text, MD_SIZE size, void* userdata)
     lean_dec_ref(new_string);
 }
 
-lean_obj_res lean_md4c_markdown_to_html(b_lean_obj_res s) {
-    /* TODO: customizable */
-    unsigned p_flags = MD_DIALECT_GITHUB | MD_FLAG_LATEXMATHSPANS | MD_FLAG_NOHTML;
-    /* TODO: customizable */
-    unsigned r_flags = MD_HTML_FLAG_XHTML | MD_HTML_FLAG_MATHJAX | MD_HTML_FLAG_MATHJAX_USE_DOLLAR;
+lean_obj_res lean_md4c_markdown_to_html(b_lean_obj_res s, uint32_t p_flags, uint32_t r_flags) {
     size_t input_size = lean_string_size(s) - 1;
     lean_object *html_string = lean_mk_string("");
 
