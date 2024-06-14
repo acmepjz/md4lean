@@ -1,8 +1,5 @@
 #include <lean/lean.h>
 #include <md4c-html.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 static void
 process_output(const MD_CHAR* text, MD_SIZE size, void* userdata)
