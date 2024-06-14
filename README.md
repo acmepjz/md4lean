@@ -9,7 +9,8 @@ has been copied into this repository, so there is no need for other installation
 
 Compared to the upstream, a new feature `MD_HTML_FLAG_MATHJAX[_USE_DOLLAR]` is added.
 
-## Compile under Windows using MSVC
+## Compile under Windows
 
-There is an extremely hacky solution of compiling under Windows using MSVC.
-You need to run `lake build` under Visual Studio Developer Command Prompt (or `git-bash` opened under it).
+There is an extremely hacky solution for compiling under Windows, which is working but not widely tested.
+It will call Lean's built-in clang compiler, which is shipped with full library files, but without headers.
+To overcome missing header problem, the minimal ad-hoc C headers are provided.
