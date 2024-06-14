@@ -9,20 +9,15 @@ def srcNames := #["entity", "md4c", "md4c-html"]
 def wrapperName := "wrapper"
 def buildDir := defaultBuildDir
 
-def MSVC.compileO (oFile srcFile : FilePath) (moreArgs : Array String := #[]) : LogIO Unit := do
-  createParentDirs oFile
-  proc {
-    cmd := "cl"
-    args := #["/nologo", "/c", "/Fo:", oFile.toString, srcFile.toString] ++ moreArgs
-  }
-
 def md4cOTarget (pkg : Package) (srcName : String) : FetchM (BuildJob FilePath) := do
   let oFile := pkg.dir / buildDir / md4cDir / ⟨ srcName ++ ".o" ⟩
   let srcTarget ← inputFile <| pkg.dir / md4cDir / ⟨ srcName ++ ".c" ⟩
   buildFileAfterDep oFile srcTarget fun srcFile => do
     if Platform.isWindows then
-      let flags := #["/I", (pkg.dir / md4cDir).toString]
-      MSVC.compileO oFile srcFile flags
+      let flags := #["-I", ((← getLeanIncludeDir) / "clang").toString,
+        "-I", (pkg.dir / md4cDir).toString,
+        "-I", (pkg.dir / md4cDir / "adhoc_include").toString, "-fPIC"]
+      compileO oFile srcFile flags (← getLeanCc)
     else
       let flags := #["-I", (pkg.dir / md4cDir).toString, "-fPIC"]
       compileO oFile srcFile flags
@@ -34,7 +29,8 @@ def wrapperOTarget (pkg : Package) : FetchM (BuildJob FilePath) := do
     if Platform.isWindows then
       let flags := #["-I", (← getLeanIncludeDir).toString,
         "-I", ((← getLeanIncludeDir) / "clang").toString,
-        "-I", (pkg.dir / md4cDir).toString, "-fPIC"]
+        "-I", (pkg.dir / md4cDir).toString,
+        "-I", (pkg.dir / md4cDir / "adhoc_include").toString, "-fPIC"]
       compileO oFile srcFile flags (← getLeanCc)
     else
       let flags := #["-I", (← getLeanIncludeDir).toString,
