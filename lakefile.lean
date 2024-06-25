@@ -47,3 +47,6 @@ extern_lib md4c (pkg) := do
 
 lean_exe «example» where
   root := `Main
+
+lean_exe test where
+  root := `Test
