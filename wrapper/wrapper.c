@@ -64,10 +64,13 @@ typedef struct parse_stack {
 
 parse_stack *parse_stack_new() {
     parse_stack *stk = malloc(sizeof(parse_stack));
+    if (stk == 0) lean_internal_panic_out_of_memory();
     stk->size = 64;
     stk->top = 0;
     stk->args = malloc(sizeof(lean_object *) * stk->size);
+    if (stk->args == 0) lean_internal_panic_out_of_memory();
     stk->details = malloc(sizeof(details) * stk->size);
+    if (stk->details == 0) lean_internal_panic_out_of_memory();
     stk->args[0] = lean_mk_empty_array();
 
     return stk;
@@ -77,7 +80,9 @@ void parse_stack_push(parse_stack *stk, details details) {
     if (stk->top >= stk->size - 1) {
         size_t newsize = stk->size * 2;
         stk->args = realloc(stk->args, sizeof(lean_object) * newsize);
+        if (stk->args == 0) lean_internal_panic_out_of_memory();
         stk->details = realloc(stk->details, sizeof(details) * newsize);
+        if (stk->details == 0) lean_internal_panic_out_of_memory();
         stk->size = newsize;
     }
     stk->top++;
