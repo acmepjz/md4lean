@@ -43,6 +43,39 @@ typedef union {
     MD_TEXTTYPE text;
 } NODE_TYPE;
 
+
+// Which Lean type are we constructing in the AST right now? This is used to deal with the fact that
+// md4c places both text nodes and block nodes underneath LI nodes. In particular,
+//  * blah
+//    ```lang
+//    code
+//    ```
+// is parsed as:
+//   - UL
+//     - LI
+//       - TEXT "blah"
+//       - CODEBLOCK
+//         - TEXT "lang"
+//         - CODE "code"
+// but we want to make an AST for Lean like:
+//   - UL
+//     - LI
+//       - P
+//         - TEXT "blah"
+//       - CODEBLOCK
+//         - TEXT "lang"
+//         - CODE "code"
+// so we implicitly open and close P nodes inside of LI nodes, but this must be tracked.
+//
+// It works like this:
+//  - When encountering text, check if the stack top is LI. If so, push TAG_IMPLICIT_P. Here, "text"
+//    can be either md4c's notion of text or its notion of span.
+//  - When ending an LI, if the top of the stack is not LI, it must be an implicit P. Create the P
+//    node.
+//  - When starting a block, if the top of the stack is TAG_IMPLICIT_P, close that paragraph before
+//    starting the new block. This is for blocks that are siblings of text under an LI.
+typedef enum {TAG_BLOCK, TAG_TEXT, TAG_LI, TAG_IMPLICIT_P} tag;
+
 typedef union details {
     MD_BLOCK_UL_DETAIL ul_details;
     MD_BLOCK_OL_DETAIL ol_details;
@@ -60,6 +93,7 @@ typedef struct parse_stack {
     size_t top;
     lean_object **args;
     details *details;
+    tag *tags;
 } parse_stack;
 
 parse_stack *parse_stack_new() {
@@ -72,22 +106,26 @@ parse_stack *parse_stack_new() {
     stk->details = malloc(sizeof(details) * stk->size);
     if (stk->details == 0) lean_internal_panic_out_of_memory();
     stk->args[0] = lean_mk_empty_array();
+    stk->tags = malloc(sizeof(tag) * stk->size);
 
     return stk;
 }
 
-void parse_stack_push(parse_stack *stk, details details) {
+void parse_stack_push(parse_stack *stk, details details, tag tag) {
     if (stk->top >= stk->size - 1) {
         size_t newsize = stk->size * 2;
         stk->args = realloc(stk->args, sizeof(lean_object) * newsize);
         if (stk->args == 0) lean_internal_panic_out_of_memory();
         stk->details = realloc(stk->details, sizeof(details) * newsize);
         if (stk->details == 0) lean_internal_panic_out_of_memory();
+        stk->tags = realloc(stk->tags, sizeof(tag) * newsize);
+        if (stk->tags == 0) lean_internal_panic_out_of_memory();
         stk->size = newsize;
     }
     stk->top++;
     stk->args[stk->top] = (lean_object *)lean_mk_empty_array();
     stk->details[stk->top] = details;
+    stk->tags[stk->top] = tag;
 }
 
 void parse_stack_save(parse_stack *stk, lean_obj_arg arg) {
@@ -100,6 +138,10 @@ lean_obj_res parse_stack_pop(parse_stack *stk) {
     return argarray;
 }
 
+tag parse_stack_top_tag(parse_stack *stk) {
+    return stk->tags[stk->top];
+}
+
 void parse_stack_free(parse_stack *stk) {
     // If the parser left junk on the stack, clean it up
     while (stk->top > 0) {
@@ -108,6 +150,7 @@ void parse_stack_free(parse_stack *stk) {
     lean_dec_ref(stk->args[0]);
     free(stk->args);
     free(stk->details);
+    free(stk->tags);
     free(stk);
 }
 
@@ -147,8 +190,38 @@ lean_obj_res get_attr(MD_ATTRIBUTE attr, lean_obj_arg dest) {
     return dest;
 }
 
+static unsigned int block_ctor(MD_BLOCKTYPE type) {
+    switch (type) {
+    case MD_BLOCK_QUOTE:
+        return 7;
+    case MD_BLOCK_HR:
+        return 3;
+    case MD_BLOCK_H:
+        return 4;
+    case MD_BLOCK_CODE:
+        return 5;
+    case MD_BLOCK_HTML:
+        return 6;
+    case MD_BLOCK_P:
+        return 0;
+    case MD_BLOCK_TABLE:
+        return 8;
+    default:
+        lean_internal_panic_unreachable();
+    }
+}
+
 static int enter_block_callback(MD_BLOCKTYPE type, void *detail, void *stack) {
     details block_details = no_detail;
+
+    // See note on typedef tag
+    if (parse_stack_top_tag(stack) == TAG_IMPLICIT_P) {
+        lean_object *texts = parse_stack_pop((parse_stack *)stack);
+        lean_object *p = lean_alloc_ctor(block_ctor(MD_BLOCK_P), 1, 0);
+        lean_ctor_set(p, 0, texts);
+        parse_stack_save(stack, p);
+        assert(parse_stack_top_tag(stack) == TAG_LI);
+    }
 
     switch (type) {
     case MD_BLOCK_UL: {
@@ -167,29 +240,8 @@ static int enter_block_callback(MD_BLOCKTYPE type, void *detail, void *stack) {
         block_details = no_detail;
     }
 
-    parse_stack_push((parse_stack *)stack, block_details);
+    parse_stack_push((parse_stack *)stack, block_details, type == MD_BLOCK_LI ? TAG_LI : TAG_BLOCK);
     return 0;
-}
-
-static unsigned int block_ctor(MD_BLOCKTYPE type) {
-    switch (type) {
-    case MD_BLOCK_QUOTE:
-        return 9;
-    case MD_BLOCK_HR:
-        return 5;
-    case MD_BLOCK_H:
-        return 6;
-    case MD_BLOCK_CODE:
-        return 7;
-    case MD_BLOCK_HTML:
-        return 8;
-    case MD_BLOCK_P:
-        return 0;
-    case MD_BLOCK_TABLE:
-        return 10;
-    default:
-        lean_internal_panic_unreachable();
-    }
 }
 
 static int leave_block_callback(MD_BLOCKTYPE type, void *detail, void *userdata) {
@@ -210,9 +262,10 @@ static int leave_block_callback(MD_BLOCKTYPE type, void *detail, void *userdata)
         MD_BLOCK_UL_DETAIL ul_detail = stack->details[stack->top].ul_details;
         uint8_t is_tight = ul_detail.is_tight ? 1 : 0;
         lean_object *items = parse_stack_pop(stack);
-        lean_object *ul = lean_alloc_ctor(is_tight ? 1 : 2, 2, 0);
+        lean_object *ul = lean_alloc_ctor(1, 2, 1);
         lean_ctor_set(ul, 0, lean_box_uint32(ul_detail.mark));
         lean_ctor_set(ul, 1, items);
+        lean_ctor_set_uint8(ul, 2 * sizeof(void *), is_tight);
         parse_stack_save(stack, ul);
         break;
     }
@@ -229,10 +282,11 @@ static int leave_block_callback(MD_BLOCKTYPE type, void *detail, void *userdata)
         MD_BLOCK_OL_DETAIL ol_detail = stack->details[stack->top].ol_details;
         uint8_t is_tight = ol_detail.is_tight ? 1 : 0;
         lean_object *items = parse_stack_pop(stack);
-        lean_object *ol = lean_alloc_ctor(is_tight ? 3 : 4, 3, 0);
+        lean_object *ol = lean_alloc_ctor(2, 3, 1);
         lean_ctor_set(ol, 0, lean_unsigned_to_nat(ol_detail.start));
         lean_ctor_set(ol, 1, lean_box_uint32(ol_detail.mark_delimiter));
         lean_ctor_set(ol, 2, items);
+        lean_ctor_set_uint8(ol, 3 * sizeof(void *), is_tight);
         parse_stack_save(stack, ol);
         break;
     }
@@ -240,6 +294,18 @@ static int leave_block_callback(MD_BLOCKTYPE type, void *detail, void *userdata)
         // The details provided to the enter callback are incorrect; use the
         // ones passed here
         MD_BLOCK_LI_DETAIL *li_detail = (MD_BLOCK_LI_DETAIL *)detail;
+
+        // If the tag on the stack isn't LI, then a paragraph block was pushed for implicit nesting.
+        // Close it!
+        if (parse_stack_top_tag(stack) != TAG_LI) {
+            assert(parse_stack_top_tag(stack) == TAG_IMPLICIT_P);
+            lean_object *texts = parse_stack_pop(stack);
+            lean_object *p = lean_alloc_ctor(block_ctor(MD_BLOCK_P), 1, 0);
+            lean_ctor_set(p, 0, texts);
+            parse_stack_save(stack, p);
+            assert(parse_stack_top_tag(stack) == TAG_LI);
+        }
+
         lean_object *blocks = parse_stack_pop(stack);
         lean_object *li = lean_alloc_ctor(0, 3, 1);
         lean_ctor_set_uint8(li, 3 * sizeof(void *), li_detail->is_task ? 1 : 0);
@@ -365,9 +431,13 @@ static int leave_block_callback(MD_BLOCKTYPE type, void *detail, void *userdata)
 }
 
 static int enter_span_callback(MD_SPANTYPE type, void *detail, void *stack) {
+    // If the span is nested right below a LI, push a block as well. See note next to typedef tag.
+    if (parse_stack_top_tag((parse_stack *)stack) == TAG_LI) {
+        parse_stack_push((parse_stack *)stack, (details)no_detail, TAG_IMPLICIT_P);
+    }
     // The details provided to the enter callback for spans are typically
     // incorrect, so there's no sense saving them
-    parse_stack_push((parse_stack *)stack, (details)no_detail);
+    parse_stack_push((parse_stack *)stack, (details)no_detail, TAG_TEXT);
     return 0;
 }
 
@@ -470,6 +540,12 @@ static int leave_span_callback(MD_SPANTYPE type, void *detail, void *userdata) {
 
 static int text_callback(MD_TEXTTYPE type, const MD_CHAR *text, MD_SIZE size, void *userdata) {
     parse_stack *stack = (parse_stack *)userdata;
+
+    // If the span is nested right below a LI, push a block as well. See note next to typedef tag.
+    if (parse_stack_top_tag(stack) == TAG_LI) {
+        parse_stack_push(stack, (details)no_detail, TAG_IMPLICIT_P);
+    }
+
     switch (type) {
     case MD_TEXT_NORMAL: {
         lean_object *txt = lean_alloc_ctor(0, 1, 0);
