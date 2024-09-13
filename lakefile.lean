@@ -11,7 +11,7 @@ def buildDir := defaultBuildDir
 
 def md4cOTarget (pkg : Package) (srcName : String) : FetchM (BuildJob FilePath) := do
   let oFile := pkg.dir / buildDir / md4cDir / ⟨ srcName ++ ".o" ⟩
-  let srcTarget ← inputFile <| pkg.dir / md4cDir / ⟨ srcName ++ ".c" ⟩
+  let srcTarget ← inputTextFile <| pkg.dir / md4cDir / ⟨ srcName ++ ".c" ⟩
   buildFileAfterDep oFile srcTarget fun srcFile => do
     if Platform.isWindows then
       let flags := #["-I", ((← getLeanIncludeDir) / "clang").toString,
@@ -24,7 +24,7 @@ def md4cOTarget (pkg : Package) (srcName : String) : FetchM (BuildJob FilePath) 
 
 def wrapperOTarget (pkg : Package) : FetchM (BuildJob FilePath) := do
   let oFile := pkg.dir / buildDir / wrapperDir / ⟨ wrapperName ++ ".o" ⟩
-  let srcTarget ← inputFile <| pkg.dir / wrapperDir / ⟨ wrapperName ++ ".c" ⟩
+  let srcTarget ← inputTextFile <| pkg.dir / wrapperDir / ⟨ wrapperName ++ ".c" ⟩
   buildFileAfterDep oFile srcTarget fun srcFile => do
     if Platform.isWindows then
       let flags := #["-I", (← getLeanIncludeDir).toString,
