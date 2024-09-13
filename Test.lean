@@ -13,7 +13,6 @@ def test (successes : IO.Ref Nat) (failures : IO.Ref (Array (String × Document 
 
 open MD4Lean
 
-
 def go (successes : IO.Ref Nat) (failures : IO.Ref (Array (String × Document × Option Document))) (i : Nat) : IO Unit := do
   --IO.println <| repr <| parse s!"{i}"
   test successes failures #[.p #[.normal s!"{i}"]] s!"{i}"
@@ -25,12 +24,12 @@ def go (successes : IO.Ref Nat) (failures : IO.Ref (Array (String × Document ×
   test successes failures #[.p #[.normal "x", .entity "&emdash;", .normal "y"]] "x&emdash;y"
   test successes failures #[.html #["<br/>", "\n"]] "<br/>"
   test successes failures #[.blockquote #[.p #[.normal "Hello!"]]] "> Hello!"
-  test successes failures #[.tightUl '*' #[{contents := #[.normal "Hello!"]}]] "* Hello!"
-  test successes failures #[.tightUl '*' #[{contents := #[.normal "Hello!"]}, {contents :=  #[.normal "Again!"]}]] "* Hello!\n* Again!"
-  test successes failures #[.tightUl '*' #[{contents := #[.normal "Hello!"]}], .tightUl '-' #[{contents := #[.normal "Again!"]}]] "* Hello!\n- Again!"
-  test successes failures #[.looseUl '*' #[{contents := #[.p #[.normal "A"]]}, {contents := #[.p #[.normal "B"]]}, {contents := #[.p #[.normal "C"]]}]] "\n\n* A\n\n\n* B\n\n* C"
-  test successes failures #[.tightOl 1 '.' #[{contents := #[.normal "x"]}, {contents := #[.normal "y"]}]] "1. x\n2. y"
-  test successes failures #[.looseOl 1 ')' #[{contents := #[.p #[.normal "x"]]}, {contents := #[.p #[.normal "y"]]}]] "1) x\n\n2) y"
+  test successes failures #[.ul true '*' #[{contents := #[.p #[.normal "Hello!"]]}]] "* Hello!"
+  test successes failures #[.ul true '*' #[{contents := #[.p #[.normal "Hello!"]]}, {contents :=  #[.p #[.normal "Again!"]]}]] "* Hello!\n* Again!"
+  test successes failures #[.ul true '*' #[{contents := #[.p #[.normal "Hello!"]]}], .ul true '-' #[{contents := #[.p #[.normal "Again!"]]}]] "* Hello!\n- Again!"
+  test successes failures #[.ul false '*' #[{contents := #[.p #[.normal "A"]]}, {contents := #[.p #[.normal "B"]]}, {contents := #[.p #[.normal "C"]]}]] "\n\n* A\n\n\n* B\n\n* C"
+  test successes failures #[.ol true 1 '.' #[{contents := #[.p #[.normal "x"]]}, {contents := #[.p #[.normal "y"]]}]] "1. x\n2. y"
+  test successes failures #[.ol false 1 ')' #[{contents := #[.p #[.normal "x"]]}, {contents := #[.p #[.normal "y"]]}]] "1) x\n\n2) y"
   test successes failures #[.p #[.normal "x"], .hr, .p #[.normal "y"]] "x\n\n---\n\ny"
   test successes failures #[.p #[.normal "x"], .hr, .p #[.normal "y"]] "x\n\n---\n\ny"
   test successes failures #[.header 1 #[.normal "foo"]] "# foo"
@@ -57,8 +56,21 @@ def go (successes : IO.Ref Nat) (failures : IO.Ref (Array (String × Document ×
   test successes failures #[.p #[.wikiLink #[.normal "link"] #[.normal "link"]]] "[[link]]" (parserFlags := MD_FLAG_WIKILINKS)
   test successes failures #[.p #[.wikiLink #[.normal "tgt"] #[.normal "lbl"]]] "[[tgt|lbl]]" (parserFlags := MD_FLAG_WIKILINKS)
   test successes failures #[.p #[.normal "some ", .code #["code"]]] "some `code`"
+  test successes failures
+    #[.ul false '*'
+      #[⟨false, none, none, #[.p #[.normal "foo"], .code #[.normal "lean"] #[.normal "lean"] (some '`') #[" ", "blah", "\n"]]⟩,
+        ⟨false, none, none, #[.p #[.normal "bar"]]⟩]]
+    " * foo\n\n    ```lean\n     blah\n     ```\n * bar\n"
+  test successes failures #[.ul true '*' #[⟨false, none, none, #[.p #[.normal "foo  ", .em #[.normal "stuff"]]]⟩, ⟨false, none, none, #[.p #[.normal "bar"]]⟩]] " * foo  *stuff*\n * bar"
+  test successes failures #[.ul true '*' #[⟨false, none, none, #[.p #[.normal "foo"], .ul true '*' #[⟨false, none, none, #[.p #[.normal "bar```"]]⟩]]⟩]] " * foo\n   * bar```\n"
+  test successes failures
+    #[.ul true '*'
+      #[⟨false, none, none,
+        #[.p #[MD4Lean.Text.normal "foo"],
+          .code #[.normal "lean"] #[.normal "lean"] (some '`') #["blah", "\n"]]⟩]]
+    " * foo\n   ```lean\n   blah\n   ```\n"
   test successes failures tableAst  tableString (parserFlags := MD_FLAG_TABLES)
-  test successes failures #[.tightUl '*' #[⟨true, some ' ', some 4, #[.normal "one"] ⟩, ⟨true, some 'X', some 15, #[.normal "two"] ⟩]] " * [ ] one\n * [X] two" (parserFlags := MD_FLAG_TASKLISTS)
+  test successes failures #[.ul true '*' #[⟨true, some ' ', some 4, #[.p #[.normal "one"]] ⟩, ⟨true, some 'X', some 15, #[.p #[.normal "two"]] ⟩]] " * [ ] one\n * [X] two" (parserFlags := MD_FLAG_TASKLISTS)
 where
   tableAst : Array Block :=
     #[.table

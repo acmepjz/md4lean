@@ -188,14 +188,10 @@ deriving Inhabited, Repr, BEq
 inductive Block where
   /-- A paragraph -/
   | p : Array Text → Block
-  /-- A tight unordered list, without blank lines between elements -/
-  | tightUl (mark : Char) : Array (Li Text) → Block
-  /-- A loose unordered list, with blank lines between elements -/
-  | looseUl (mark : Char) : Array (Li Block) → Block
-  /-- A tight ordered list, without blank lines between elements -/
-  | tightOl (start : Nat) (mark : Char) : Array (Li Text) → Block
-  /-- A loose ordered list, with blank lines between elements -/
-  | looseOl (start : Nat) (mark : Char) : Array (Li Block) → Block
+  /-- An unordered list -/
+  | ul (tight : Bool) (mark : Char) : Array (Li Block) → Block
+  /-- An ordered list -/
+  | ol (tight : Bool) (start : Nat) (mark : Char) : Array (Li Block) → Block
   /-- A thematic break, indicated with `-------` -/
   | hr
   /-- A header -/
