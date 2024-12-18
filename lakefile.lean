@@ -1,7 +1,8 @@
 import Lake
 open System Lake DSL
 
-package MD4Lean
+package MD4Lean where
+  testDriver := "MD4LeanTest"
 
 def md4cDir : FilePath := "md4c"
 def wrapperDir := "wrapper"
@@ -38,12 +39,15 @@ def wrapperOTarget (pkg : Package) : FetchM (BuildJob FilePath) := do
       compileO oFile srcFile flags
 
 @[default_target]
-lean_lib MD4Lean
+lean_lib MD4Lean where
+  precompileModules := true
 
 extern_lib md4c (pkg) := do
-  let libFile := pkg.dir / buildDir / md4cDir / "libleanmd4c.a"
+  let name := nameToStaticLib "leanmd4c"
   let oTargets := (←srcNames.mapM (md4cOTarget pkg)) ++ #[←wrapperOTarget pkg]
-  buildStaticLib libFile oTargets
+  buildStaticLib (pkg.nativeLibDir / name) oTargets
 
 lean_exe «example» where
   root := `Main
+
+lean_lib MD4LeanTest
