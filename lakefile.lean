@@ -10,7 +10,7 @@ def srcNames := #["entity", "md4c", "md4c-html"]
 def wrapperName := "wrapper"
 def buildDir := defaultBuildDir
 
-def md4cOTarget (pkg : Package) (srcName : String) : FetchM (BuildJob FilePath) := do
+def md4cOTarget (pkg : Package) (srcName : String) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / buildDir / md4cDir / ⟨ srcName ++ ".o" ⟩
   let srcTarget ← inputTextFile <| pkg.dir / md4cDir / ⟨ srcName ++ ".c" ⟩
   buildFileAfterDep oFile srcTarget fun srcFile => do
@@ -23,7 +23,7 @@ def md4cOTarget (pkg : Package) (srcName : String) : FetchM (BuildJob FilePath) 
       let flags := #["-I", (pkg.dir / md4cDir).toString, "-fPIC"]
       compileO oFile srcFile flags
 
-def wrapperOTarget (pkg : Package) : FetchM (BuildJob FilePath) := do
+def wrapperOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / buildDir / wrapperDir / ⟨ wrapperName ++ ".o" ⟩
   let srcTarget ← inputTextFile <| pkg.dir / wrapperDir / ⟨ wrapperName ++ ".c" ⟩
   buildFileAfterDep oFile srcTarget fun srcFile => do
