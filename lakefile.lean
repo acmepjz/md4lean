@@ -2,7 +2,7 @@ import Lake
 open System Lake DSL
 
 package MD4Lean where
-  testDriver := "MD4LeanTest"
+  testDriver := "test"
 
 def md4cDir : FilePath := "md4c"
 def wrapperDir := "wrapper"
@@ -50,4 +50,8 @@ extern_lib md4c (pkg) := do
 lean_exe «example» where
   root := `Main
 
+
 lean_lib MD4LeanTest
+
+lean_exe test where
+  root := `MD4LeanTestDriver
