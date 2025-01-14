@@ -2,19 +2,44 @@ import MD4Lean
 
 open MD4Lean
 
-def test (successes : IO.Ref Nat) (failures : IO.Ref (Array (String × Document × Option Document))) (expected : Array Block) (str : String) (parserFlags : UInt32 := MD_DIALECT_COMMONMARK) : IO Unit := do
-  let actual := parse (parserFlags := parserFlags) str
+namespace MD4Lean.Test.Parser
+
+/--
+Runs a concrete parser test.
+
+Parameters:
+
+ * `successes` is a counter of successes so far, to be incremented if the test passes
+
+ * `failures` is an array of parse errors that consist of the input,
+   the expected output, and the actual output (if produced)
+
+ * `expected` is the expected contents of the document
+
+ * `input` is the string to parse
+
+ * `parserFlags` is a set of flags for `md4c`, which defaults to `MD_DIALECT_COMMONMARK`
+-/
+def test
+    (successes : IO.Ref Nat)
+    (failures : IO.Ref (Array (String × Document × Option Document)))
+    (expected : Array Block)
+    (input : String)
+    (parserFlags : UInt32 := MD_DIALECT_COMMONMARK) :
+    IO Unit := do
+  let actual := parse (parserFlags := parserFlags) input
 
   if some expected == actual.map (·.blocks) then
     successes.modify (· + 1)
   else
-    failures.modify (·.push (str, ⟨expected⟩, actual))
+    failures.modify (·.push (input, ⟨expected⟩, actual))
 
+/--
+Runs a battery of parser tests, counting passed tests in `successes` and accumulating errors in `failures`.
 
-open MD4Lean
-
-def go (successes : IO.Ref Nat) (failures : IO.Ref (Array (String × Document × Option Document))) (i : Nat) : IO Unit := do
-  --IO.println <| repr <| parse s!"{i}"
+The parameter `i` is used to allow consecutive runs to vary a bit.
+-/
+def runTests (successes : IO.Ref Nat) (failures : IO.Ref (Array (String × Document × Option Document))) (i : Nat) : IO Unit := do
   test successes failures #[.p #[.normal s!"{i}"]] s!"{i}"
   test successes failures #[.p #[.normal "x"]] "x"
   test successes failures #[.p #[.normal "x", .softbr "\n", .normal "y"]] "x\ny"
@@ -84,7 +109,15 @@ where
 | 1 | 2   |
 "#
 
-def report (successes : IO.Ref Nat) (failures : IO.Ref (Array (String × Document × Option Document))) : IO UInt32 := do
+
+/--
+Given the results from `runTests`, report them in a friendly manner
+and return an exit code (`0` if all succeeded, non-zero otherwise).
+-/
+def report
+    (successes : IO.Ref Nat)
+    (failures : IO.Ref (Array (String × Document × Option Document))) :
+    IO UInt32 := do
   let successes ← successes.get
   let failures ← failures.get
   if failures.isEmpty then
@@ -108,24 +141,3 @@ def report (successes : IO.Ref Nat) (failures : IO.Ref (Array (String × Documen
         IO.println <| repr <| expected
     IO.println "--------------------"
     pure 1
-
-def main : List String → IO UInt32
-  | [] => do
-    let successes ← IO.mkRef 0
-    let failures ← IO.mkRef #[]
-    go successes failures 0
-    report successes failures
-  | [n] => do
-    match n.toNat? with
-    | none =>
-      IO.eprintln s!"Didn't understand '{n}' as a Nat"
-      return 1
-    | some k =>
-      let successes ← IO.mkRef 0
-      let failures ← IO.mkRef #[]
-      for i in [0:k] do
-        go successes failures i
-      report successes failures
-  | _ => do
-    IO.eprintln "Too many arguments"
-    return 2
