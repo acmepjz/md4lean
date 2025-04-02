@@ -45,7 +45,7 @@ lean_lib MD4Lean where
 extern_lib md4c (pkg) := do
   let name := nameToStaticLib "leanmd4c"
   let oTargets := (←srcNames.mapM (md4cOTarget pkg)) ++ #[←wrapperOTarget pkg]
-  buildStaticLib (pkg.nativeLibDir / name) oTargets
+  buildStaticLib (pkg.staticLibDir / name) oTargets
 
 lean_exe «example» where
   root := `Main
