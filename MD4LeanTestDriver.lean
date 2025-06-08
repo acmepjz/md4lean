@@ -13,6 +13,10 @@ open MD4Lean.Test.Parser
 #guard_msgs in
 #eval MD4Lean.renderHtml "Hello *world*"
 
+/-- info: some "<ul>\n<li class=\"task-list-item\"><input type=\"checkbox\" class=\"task-list-item-checkbox\" disabled=\"true\" />Is this valid XHTML?</li>\n<li class=\"task-list-item\"><input type=\"checkbox\" class=\"task-list-item-checkbox\" disabled=\"true\" checked=\"true\" />Is this valid XHTML?</li>\n</ul>\n" -/
+#guard_msgs in
+#eval MD4Lean.renderHtml "- [ ] Is this valid XHTML?\n- [x] Is this valid XHTML?"
+
 /-!
 
 # Parsing tests
