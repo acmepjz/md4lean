@@ -255,6 +255,6 @@ Parses Markdown into an AST.
 Returns `some` if the underlying md4c parser succeeds, or `none` if it fails.
 -/
 @[extern "lean_md4c_markdown_parse"]
-opaque parse(input : @& String) (parserFlags : UInt32 := MD_DIALECT_COMMONMARK) : Option Document
+opaque parse (input : @& String) (parserFlags : UInt32 := MD_DIALECT_COMMONMARK) : Option Document
 
 end MD4Lean
