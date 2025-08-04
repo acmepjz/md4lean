@@ -263,10 +263,18 @@ static int leave_block_callback(MD_BLOCKTYPE type, void *detail, void *userdata)
         uint8_t is_tight = ul_detail.is_tight ? 1 : 0;
         lean_object *items = parse_stack_pop(stack);
 
+        #if LEAN_VERSION_MAJOR == 4 && LEAN_VERSION_MINOR <= 22
+        // Old constructor layout, prior to nightly-2025-07-01 (up to v4.22.0)
+        lean_object *ul = lean_alloc_ctor(1, 2, 1);
+        lean_ctor_set(ul, 0, lean_box_uint32(ul_detail.mark));
+        lean_ctor_set(ul, 1, items);
+        lean_ctor_set_uint8(ul, 2 * sizeof(void *), is_tight);
+        #else
         lean_object *ul = lean_alloc_ctor(1, 1, 5); // 4 bytes for char, 1 for bool
         lean_ctor_set(ul, 0, items);
         lean_ctor_set_uint32(ul, sizeof(void*), ul_detail.mark);
         lean_ctor_set_uint8(ul, sizeof(void *) + sizeof(uint32_t), is_tight);
+        #endif
 
         parse_stack_save(stack, ul);
         break;
@@ -284,11 +292,20 @@ static int leave_block_callback(MD_BLOCKTYPE type, void *detail, void *userdata)
         MD_BLOCK_OL_DETAIL ol_detail = stack->details[stack->top].ol_details;
         uint8_t is_tight = ol_detail.is_tight ? 1 : 0;
         lean_object *items = parse_stack_pop(stack);
+        #if LEAN_VERSION_MAJOR == 4 && LEAN_VERSION_MINOR <= 22
+        // Old constructor layout, prior to nightly-2025-07-01 (up to v4.22.0)
+        lean_object *ol = lean_alloc_ctor(2, 3, 1);
+        lean_ctor_set(ol, 0, lean_unsigned_to_nat(ol_detail.start));
+        lean_ctor_set(ol, 1, lean_box_uint32(ol_detail.mark_delimiter));
+        lean_ctor_set(ol, 2, items);
+        lean_ctor_set_uint8(ol, 3 * sizeof(void *), is_tight);
+        #else
         lean_object *ol = lean_alloc_ctor(2, 2, 5); // 4 bytes for char, 1 for bool
         lean_ctor_set(ol, 0, lean_unsigned_to_nat(ol_detail.start));
         lean_ctor_set(ol, 1, items);
         lean_ctor_set_uint32(ol, 2 * sizeof(void*), ol_detail.mark_delimiter);
         lean_ctor_set_uint8(ol, 2 * sizeof(void *) + sizeof(uint32_t), is_tight);
+        #endif
         parse_stack_save(stack, ol);
         break;
     }
