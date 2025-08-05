@@ -10,8 +10,18 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Here, "original" means to use the lean-toolchain file's contents in the repository
+        lean-version: ["original", "v4.21.0", "v4.22.0-rc3", "nightly-2025-08-04"]
+    name: CI (${{ matrix.lean-version }})
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set Lean version
+        if: matrix.lean-version != 'original'
+        run: echo "${{ matrix.lean-version }}" > lean-toolchain
+
       # uses lean standard action with all default input values
       - uses: leanprover/lean-action@v1
