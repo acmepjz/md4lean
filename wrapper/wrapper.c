@@ -273,7 +273,7 @@ static int leave_block_callback(MD_BLOCKTYPE type, void *detail, void *userdata)
         lean_object *ul = lean_alloc_ctor(1, 1, 5); // 4 bytes for char, 1 for bool
         lean_ctor_set(ul, 0, items);
         lean_ctor_set_uint32(ul, sizeof(void*), ul_detail.mark);
-        lean_ctor_set_uint8(ul, sizeof(void *) + sizeof(uint32_t), is_tight);
+        lean_ctor_set_uint8(ul, sizeof(void*) + sizeof(uint32_t), is_tight);
         #endif
 
         parse_stack_save(stack, ul);
@@ -304,7 +304,7 @@ static int leave_block_callback(MD_BLOCKTYPE type, void *detail, void *userdata)
         lean_ctor_set(ol, 0, lean_unsigned_to_nat(ol_detail.start));
         lean_ctor_set(ol, 1, items);
         lean_ctor_set_uint32(ol, 2 * sizeof(void*), ol_detail.mark_delimiter);
-        lean_ctor_set_uint8(ol, 2 * sizeof(void *) + sizeof(uint32_t), is_tight);
+        lean_ctor_set_uint8(ol, 2 * sizeof(void*) + sizeof(uint32_t), is_tight);
         #endif
         parse_stack_save(stack, ol);
         break;
