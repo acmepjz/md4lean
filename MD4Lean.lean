@@ -1,3 +1,6 @@
+module
+public section
+
 /-! # md4lean
 
 a Lean wrapper for the [MD4C](https://github.com/mity/md4c) Markdown parser

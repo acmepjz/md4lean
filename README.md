@@ -14,3 +14,7 @@ Compared to the upstream, a new feature `MD_HTML_FLAG_MATHJAX[_USE_DOLLAR]` is a
 There is an extremely hacky solution for compiling under Windows, which is working but not widely tested.
 It will call Lean's built-in clang compiler, which is shipped with full library files, but without headers.
 To overcome missing header problem, the minimal ad-hoc C headers are provided.
+
+## Versions
+
+Users of Lean versions 4.21 and 4.22 should use commit 44da417da3705ede62b5c39382ddd2261ec3933e of this library. Users of later versions can track `main`.

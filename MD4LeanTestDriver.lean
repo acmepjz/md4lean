@@ -1,5 +1,9 @@
-import MD4Lean
+module
+meta import MD4Lean
+meta import MD4LeanTest.Parser
 import MD4LeanTest.Parser
+
+public section
 
 open MD4Lean.Test.Parser
 
@@ -36,7 +40,7 @@ number as an argument, the tests are run that many times; this can be
 helpful to ensure the absence of reference counting errors in the FFI
 used by the parser.
 -/
-def main : List String → IO UInt32
+public def main : List String → IO UInt32
   | [] => do
     let successes ← IO.mkRef 0
     let failures ← IO.mkRef #[]

@@ -11,9 +11,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         # Here, "original" means to use the lean-toolchain file's contents in the repository
-        lean-version: ["original", "v4.21.0", "v4.22.0", "v4.23.0", "v4.24.0", "v4.25.0-rc1"]
+        # Support starts at 4.23.0 because that's when the first support
+        # for modules landed.
+        lean-version: ["original", "v4.23.0", "v4.24.0", "v4.25.0"]
     name: CI (${{ matrix.lean-version }})
 
     steps:
