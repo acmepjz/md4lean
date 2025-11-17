@@ -3,6 +3,7 @@ open System Lake DSL
 
 package MD4Lean where
   testDriver := "test"
+  leanOptions := #[⟨`experimental.module, true⟩]
 
 def md4cDir : FilePath := "md4c"
 def wrapperDir := "wrapper"

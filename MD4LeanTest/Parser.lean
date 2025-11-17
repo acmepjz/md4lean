@@ -1,4 +1,5 @@
-import MD4Lean
+module
+public import MD4Lean
 
 open MD4Lean
 
@@ -39,7 +40,7 @@ Runs a battery of parser tests, counting passed tests in `successes` and accumul
 
 The parameter `i` is used to allow consecutive runs to vary a bit.
 -/
-def runTests (successes : IO.Ref Nat) (failures : IO.Ref (Array (String × Document × Option Document))) (i : Nat) : IO Unit := do
+public def runTests (successes : IO.Ref Nat) (failures : IO.Ref (Array (String × Document × Option Document))) (i : Nat) : IO Unit := do
   test successes failures #[.p #[.normal s!"{i}"]] s!"{i}"
   test successes failures #[.p #[.normal "x"]] "x"
   test successes failures #[.p #[.normal "x", .softbr "\n", .normal "y"]] "x\ny"
@@ -114,7 +115,7 @@ where
 Given the results from `runTests`, report them in a friendly manner
 and return an exit code (`0` if all succeeded, non-zero otherwise).
 -/
-def report
+public def report
     (successes : IO.Ref Nat)
     (failures : IO.Ref (Array (String × Document × Option Document))) :
     IO UInt32 := do
