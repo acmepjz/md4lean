@@ -16,7 +16,7 @@ jobs:
         # Here, "original" means to use the lean-toolchain file's contents in the repository
         # Support starts at 4.23.0 because that's when the first support
         # for modules landed.
-        lean-version: ["original", "v4.23.0", "v4.24.0", "v4.25.0"]
+        lean-version: ["original", "v4.23.0", "v4.24.0", "v4.25.0", "v4.26.0", "v4.27.0"]
     name: CI (${{ matrix.lean-version }})
 
     steps:
