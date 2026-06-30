@@ -46,6 +46,7 @@ target wrapperObj (pkg) : FilePath := wrapperOTarget pkg
 @[default_target]
 lean_lib MD4Lean where
   precompileModules := true
+  defaultFacets := #[LeanLib.leanArtsFacet, LeanLib.sharedFacet]
   -- Link the md4c parser and the wrapper directly into the library. The precompiled shared
   -- library the interpreter loads is then self-contained: there is no separate md4c shared
   -- library to locate and bind at load time, and the wrapper's calls to the `@[export]`

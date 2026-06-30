@@ -2,6 +2,7 @@ module
 
 public import MD4Lean.Basic
 import MD4Lean.FFI
+import MD4Lean.Load
 
 public section
 
