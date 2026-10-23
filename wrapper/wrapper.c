@@ -1,3 +1,7 @@
+// LEAN_EXPORT must export the C entry points for clients that link another DLL to MD4Lean.
+#ifndef LEAN_EXPORTING
+#define LEAN_EXPORTING
+#endif
 #include <lean/lean.h>
 #include <md4c-html.h>
 
