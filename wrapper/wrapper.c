@@ -1,6 +1,12 @@
 #include <lean/lean.h>
 #include <md4c-html.h>
 
+#ifdef _WIN32
+#define MD4LEAN_WRAPPER_EXPORT __declspec(dllexport)
+#else
+#define MD4LEAN_WRAPPER_EXPORT
+#endif
+
 #ifndef __cplusplus
 // To avoid the need for stdlib.h - lean.h does this for malloc() already
 void *realloc(void *ptr, size_t new_size);
@@ -60,7 +66,8 @@ process_output(const MD_CHAR* text, MD_SIZE size, void* userdata)
     lean_dec_ref(new_string);
 }
 
-LEAN_EXPORT lean_obj_res lean_md4c_markdown_to_html(b_lean_obj_arg s, uint32_t p_flags, uint32_t r_flags) {
+MD4LEAN_WRAPPER_EXPORT
+lean_obj_res lean_md4c_markdown_to_html(b_lean_obj_arg s, uint32_t p_flags, uint32_t r_flags) {
     size_t input_size = lean_string_size(s) - 1;
     lean_object *html_string = lean_mk_string("");
 
@@ -545,7 +552,8 @@ static int text_callback(MD_TEXTTYPE type, const MD_CHAR *text, MD_SIZE size, vo
     return 0;
 }
 
-LEAN_EXPORT lean_obj_res lean_md4c_markdown_parse(b_lean_obj_arg str, uint32_t p_flags) {
+MD4LEAN_WRAPPER_EXPORT
+lean_obj_res lean_md4c_markdown_parse(b_lean_obj_arg str, uint32_t p_flags) {
     size_t input_size = lean_string_size(str) - 1;
 
     parse_stack *stack = parse_stack_new();
