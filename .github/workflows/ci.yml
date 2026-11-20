@@ -38,3 +38,9 @@ jobs:
 
       # uses lean standard action with all default input values
       - uses: leanprover/lean-action@v1
+
+      # A downstream DLL must be able to link to the C parser entry points. Static
+      # executables and #eval within MD4Lean do not check that the DLL exports them.
+      - name: Link a downstream shared library
+        shell: bash
+        run: lake build MD4LeanTest:shared
