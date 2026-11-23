@@ -79,8 +79,8 @@ inductive Text where
   Inline raw HTML (see `MD_FLAG_NOHTMLSPANS` or `MD_FLAG_NOHTML`).
 
   Each piece of raw HTML that md4c reports is a separate element. Tags, comments, processing
-  instructions, declarations or `CDATA` sections that spans several lines are split at line breaks.
-  A line break inside raw HTML is part of the HTML, so it isn't a `softbr`.
+  instructions, declarations or `CDATA` sections that span several lines are split at line breaks.
+  A line break inside raw HTML is treated as part of the HTML, rather than a `softbr`.
   -/
   | html : String → Text
 deriving Inhabited, Repr, BEq

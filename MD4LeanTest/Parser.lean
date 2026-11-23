@@ -55,6 +55,11 @@ public def runTests (successes : IO.Ref Nat) (failures : IO.Ref (Array (String Ã
   test successes failures #[.ul true '*' #[{contents := #[.p #[.html "<i>", .normal "hi", .html "</i>"]]}]] "* <i>hi</i>"
   test successes failures #[.ul true '*' #[{contents := #[.html #["<div>", "\n"]]}]] "* <div>"
   test successes failures #[.p #[.normal "a <b>x</b> c"]] "a <b>x</b> c" (parserFlags := MD_FLAG_NOHTML)
+  test successes failures #[.html #["<div>", "\n", "x", "\uFFFD", "y", "\n", "</div>", "\n"]] "<div>\nx\x00y\n</div>"
+  test successes failures #[.code #[] #[] (some '`') #["x", "\uFFFD", "y", "\n"]] "```\nx\x00y\n```"
+  test successes failures #[.code #[] #[] none #["x", "\uFFFD", "y", "\n"]] "    x\x00y"
+  test successes failures #[.code #[] #[] none #["\uFFFD", "\uFFFD", "y", "\uFFFD", "\n"]] "    \x00\x00y\x00"
+  test successes failures #[.ul true '*' #[{contents := #[.html #["<div>", "\n", "\uFFFD", "\n"]]}]] "* <div>\n  \x00"
   test successes failures #[.blockquote #[.p #[.normal "Hello!"]]] "> Hello!"
   test successes failures #[.ul true '*' #[{contents := #[.p #[.normal "Hello!"]]}]] "* Hello!"
   test successes failures #[.ul true '*' #[{contents := #[.p #[.normal "Hello!"]]}, {contents :=  #[.p #[.normal "Again!"]]}]] "* Hello!\n* Again!"
