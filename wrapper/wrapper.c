@@ -37,6 +37,7 @@ extern lean_obj_res lean_md4c_text_del(lean_obj_arg contents);
 extern lean_obj_res lean_md4c_text_latex_math(lean_obj_arg contents);
 extern lean_obj_res lean_md4c_text_latex_math_display(lean_obj_arg contents);
 extern lean_obj_res lean_md4c_text_wikilink(lean_obj_arg target, lean_obj_arg contents);
+extern lean_obj_res lean_md4c_text_html(lean_obj_arg s);
 
 extern lean_obj_res lean_md4c_block_p(lean_obj_arg contents);
 extern lean_obj_res lean_md4c_block_ul(uint8_t tight, uint32_t mark, lean_obj_arg items);
@@ -93,7 +94,11 @@ typedef union {
 } NODE_TYPE;
 
 
-// Which Lean type are we constructing in the AST right now? This is used to deal with the fact that
+// The kind of Lean node that each stack level is constructing. The callbacks use it in two
+// situations:
+// 1. text that appears directly under a list item
+// 2. raw HTML
+//
 // md4c places both text nodes and block nodes underneath LI nodes. In particular,
 //  * blah
 //    ```lang
@@ -123,7 +128,12 @@ typedef union {
 //    node.
 //  - When starting a block, if the top of the stack is TAG_IMPLICIT_P, close that paragraph before
 //    starting the new block. This is for blocks that are siblings of text under an LI.
-typedef enum {TAG_BLOCK, TAG_TEXT, TAG_LI, TAG_IMPLICIT_P} tag;
+//
+// md4c reports the contents of raw HTML blocks and inline raw HTML alike as MD_TEXT_HTML. The Lean
+// AST represents the former as strings in Block.html and the latter as Text.html elements. Entering
+// an HTML block pushes TAG_HTML_BLOCK, and the text callback checks for it to choose between the
+// two.
+typedef enum {TAG_BLOCK, TAG_TEXT, TAG_LI, TAG_IMPLICIT_P, TAG_HTML_BLOCK} tag;
 
 typedef union details {
     MD_BLOCK_UL_DETAIL ul_details;
@@ -264,7 +274,8 @@ static int enter_block_callback(MD_BLOCKTYPE type, void *detail, void *stack) {
         block_details = no_detail;
     }
 
-    parse_stack_push((parse_stack *)stack, block_details, type == MD_BLOCK_LI ? TAG_LI : TAG_BLOCK);
+    tag block_tag = type == MD_BLOCK_LI ? TAG_LI : type == MD_BLOCK_HTML ? TAG_HTML_BLOCK : TAG_BLOCK;
+    parse_stack_push((parse_stack *)stack, block_details, block_tag);
     return 0;
 }
 
@@ -522,16 +533,21 @@ static int text_callback(MD_TEXTTYPE type, const MD_CHAR *text, MD_SIZE size, vo
         parse_stack_save(stack, lean_md4c_text_entity(lean_mk_string_from_bytes(text, size)));
         break;
     }
+    case MD_TEXT_HTML: {
+        // Raw HTML blocks expect arrays of strings, while inline raw HTML is a
+        // Text element alongside the surrounding text
+        lean_object *str = lean_mk_string_from_bytes(text, size);
+        if (parse_stack_top_tag(stack) == TAG_HTML_BLOCK) {
+            parse_stack_save(stack, str);
+        } else {
+            parse_stack_save(stack, lean_md4c_text_html(str));
+        }
+        break;
+    }
     // The following cases occur only as immediate children of particular
     // block/inline nodes, and are uniquely determined by the surrounding node.
     // Thus, there's no need to allocate a constructor here, because the Lean
     // AST expects strings.
-    case MD_TEXT_HTML: {
-        // Invariant: occurs only in HTML elements, which expect arrays of
-        // strings as args
-        parse_stack_save(stack, lean_mk_string_from_bytes(text, size));
-        break;
-    }
     case MD_TEXT_CODE: {
         // Invariant: occurs only and always inside of a code block or a code
         // inline. A given code block may have many of these in a row, however
