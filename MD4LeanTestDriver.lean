@@ -68,7 +68,7 @@ Also ensure that the parser can be used from Lean itself
 -/
 
 /--
-info: Succeeded after running 48 parses
+info: Succeeded after running 59 parses
 ---
 info: 0
 -/

@@ -75,6 +75,14 @@ inductive Text where
   | latexMathDisplay : Array String → Text
   /-- A wiki-style link (see `MD_FLAG_WIKILINKS`) -/
   | wikiLink (target : Array AttrText) : Array Text → Text
+  /--
+  Inline raw HTML (see `MD_FLAG_NOHTMLSPANS` or `MD_FLAG_NOHTML`).
+
+  Each piece of raw HTML that md4c reports is a separate element. Tags, comments, processing
+  instructions, declarations or `CDATA` sections that span several lines are split at line breaks.
+  A line break inside raw HTML is treated as part of the HTML, rather than a `softbr`.
+  -/
+  | html : String → Text
 deriving Inhabited, Repr, BEq
 
 /-- A list item -/
@@ -114,7 +122,7 @@ inductive Block where
   For indented code blocks, `info` and `lang` are `#[]` and `fenceChar` is `none`.
   -/
   | code (info lang : Array AttrText) (fenceChar : Option Char) : Array String → Block
-  /-- Inline HTML block (see `MD_FLAG_NOHTMLBLOCKS` or `MD_FLAG_NOHTML`) -/
+  /-- Raw HTML block (see `MD_FLAG_NOHTMLBLOCKS` or `MD_FLAG_NOHTML`) -/
   | html : Array String → Block
   /-- A block quote (introduced with `>`) -/
   | blockquote : Array Block → Block

@@ -36,6 +36,7 @@ set_option linter.missingDocs false
 @[export lean_md4c_text_latex_math] def textLatexMath := Text.latexMath
 @[export lean_md4c_text_latex_math_display] def textLatexMathDisplay := Text.latexMathDisplay
 @[export lean_md4c_text_wikilink] def textWikiLink := Text.wikiLink
+@[export lean_md4c_text_html] def textHtml := Text.html
 
 @[export lean_md4c_block_p] def blockP := Block.p
 @[export lean_md4c_block_ul] def blockUl := Block.ul
