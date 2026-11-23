@@ -17,13 +17,13 @@ jobs:
         # Here, "original" means to use the lean-toolchain file's contents in the repository
         # Support starts at 4.23.0 because that's when the first support
         # for modules landed.
-        lean-version: ["original", "v4.23.0", "v4.24.0", "v4.25.0", "v4.26.0", "v4.27.0", "v4.28.0", "v4.29.0", "v4.30.0", "v4.31.0"]
+        lean-version: ["original", "v4.23.0", "v4.24.0", "v4.25.0", "v4.26.0", "v4.27.0", "v4.28.0", "v4.29.0", "v4.30.0", "v4.31.0", "v4.32.0", "v4.33.0", "v4.34.0", "v4.35.0", "v4.36.0"]
         # Windows and macOS are exercised only on the latest release.
         include:
           - os: windows-latest
-            lean-version: "v4.31.0"
+            lean-version: "v4.36.0"
           - os: macos-latest
-            lean-version: "v4.31.0"
+            lean-version: "v4.36.0"
     name: CI (${{ matrix.os }}, ${{ matrix.lean-version }})
 
     steps:
